@@ -1,59 +1,114 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-router" target="_blank" rel="noopener">router</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-vuex" target="_blank" rel="noopener">vuex</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <v-container>
+        <v-card v-if="tareas =! []">
+          <v-card-text class="success">
+            Listado de tareas
+          </v-card-text>
+          <v-card-text>
+            <v-data-table
+              :headers="headers"
+              :items="tareas"
+              :items-per-page="5"
+              class="elevation-1"
+            ></v-data-table>
+          </v-card-text>
+        </v-card>
+        <v-card>
+          <v-card-text class="success">
+            Listado de articulos SAP
+          </v-card-text>
+          <v-card-text>
+            <v-data-table
+              :headers="headersItems"
+              :items="items"
+              :items-per-page="10"
+              class="elevation-1"
+            ></v-data-table>
+          </v-card-text>
+        </v-card>
+
+        <div class="text-center">
+          <v-btn
+            class="ma-2"
+            :loading="loading"
+            :disabled="loading"
+            color="success"
+            @click="ListarItems"
+          >
+            Actualizar <v-icon>cached</v-icon>
+            <template v-slot:loader>
+              <span>Buscando...</span>
+            </template>
+          </v-btn>
+        </div>
+
+  </v-container>
 </template>
 
 <script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  }
-}
-</script>
+  import axios from "axios";
+  export default {
+    name: 'HelloWorld',
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+    data: () => ({
+      headers: [
+        { text: 'ID',value: 'idTarea'},
+        { text: 'Nombre', value: 'nombre' },
+        { text: 'Descripcion', value: 'descripcion' },
+        { text: 'Condicion', value: 'condicion' }
+      ],
+      tareas: [],
+      headersItems: [
+        { text: 'Código',value: 'ItemCode'},
+        { text: 'Descripción', value: 'ItemName' },
+        { text: 'Codigo de barras', value: 'BarCode' },
+        { text: 'Unidad de venta', value: 'SalesUnit' }
+      ],
+      items: [],
+
+      //Loading Buttons
+      loading: false,
+    }),
+    methods:{
+      ListarTareas(){
+        let objeto = this;
+
+          axios({
+            method: 'get',
+            url: 'http://localhost:50337/api/tareas',
+          }).then(function(response){
+              console.log(response);
+              objeto.tareas = response.data;
+          })
+      },
+      ListarItems(){
+        this.loading = true;
+        this.items = [];
+        let objeto = this;
+        let sendData = { "CompanyDB": "SBODEMOMX",
+                          "UserName": "manager",
+                          "Password": "1234"
+                      };
+          axios({
+            method: 'post',
+            url: 'http://localhost:8086/api/SL/GetAxios?command=Items',
+            headers: {
+            'content-type': 'application/json'
+          },
+            data: sendData,
+          }).then(function(response){
+              console.log(response);
+              objeto.loading = false;
+              objeto.items = response.data.value;
+          })
+      },
+    },
+    mounted(){
+      //this.ListarTareas();
+      this.ListarItems();
+    },
+    watch: {
+      
+    }
+  }
+</script>
